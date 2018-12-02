@@ -3,7 +3,7 @@
     <title>
       Unknown
     </title>
-    <link href = "./index.css" type = "text/css" rel = "stylesheet">
+    <link href = "" type = "text/css" rel = "stylesheet">
     <meta charset="utf-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script type="text/javascript" src="./index.js"></script>
@@ -11,15 +11,14 @@
   <body>
     <h1>Welcome people!</h1>
     <div>
-      <form action="/entry/" method="post">
+      <form action="/entry/" method="post" enctype="multipart/form-data">
   Username: <input type="text" name="username"><br>
+  File:<input type="file" name="file"><br>
   content: <input type="text" name="content"><br>
   <input type="submit" value="Submit">
 </form>
     </div>
     <div>
-      <input type="button" name="upvote" placeholder="Upvote" value="upvote" onclick="upvote()">
 
-    </div>
   </body>
 </html>
