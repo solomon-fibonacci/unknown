@@ -1,4 +1,4 @@
-setTimeout(function(){
+$(document).ready(function(){
     $.ajax({
       url:'/entry/',
       type: 'GET',
