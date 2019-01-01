@@ -1,13 +1,13 @@
 const express = require('express');
 const app = express();
-const fs = require('fs');
-const multer = require('multer');
+var fs = require('fs');
+var multer = require('multer');
+var upload = multer ({
+  dest: './tempUploads/'
+});
 const path = require ('path');
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({extended:false}));
-const upload = multer ({
-  dest: "./tempUploads/"
-});
+app.use(bodyParser.urlencoded({extended:true}));
 
 const handleError = (err, res) => {
   res
@@ -20,20 +20,22 @@ var entries = [];
 
 var id = 0;
 
+var newCommentId = 0;
+
 app.use('/',express.static('public'));
 
 
-app.post('/entry/',upload.single("file"), (req, res, next) =>{
+app.post('/entry/',upload.single('file'), (req, res, next) =>{
 var username = req.body.username;
 var content = req.body.content;
 id++;
 
 
-var newEntry ={id:id,username:username,content:content,upvote:0,downvote:0,parentEntry:""};
+var newEntry ={id:id,username:username,content:content,upvote:0,downvote:0,parentEntry:"",comments:[]}
 entries.push(newEntry);
 
-const tempPath = req.file.path;
-const targetPath = path.join(__dirname, `./posts/images/${username}-${id}.png`);
+var tempPath = req.file.path;
+var targetPath = path.join(__dirname, `./posts/images/${username}-${id}.png`);
 if (path.extname(req.file.originalname).toLowerCase() === ".png") {
   fs.rename(tempPath, targetPath, err => {
     if (err) return handleError(err, res);
@@ -50,6 +52,48 @@ if (path.extname(req.file.originalname).toLowerCase() === ".png") {
   });
 }
 });
+
+// Troublesome code
+app.post('/comments/:id',upload.single('file'),(req, res, next) =>{
+var newComment = req.body.newComment;
+    newCommentId++;
+    if (!req.file){
+      console.log('Please upload a file');
+    }
+
+var newCommentObject = {comment:newComment,tag:newCommentId}
+
+var idToFind = Number(req.params.id);
+var entryIndex = entries.findIndex(entry => entry.id === idToFind);
+
+if (entryIndex === -1) {
+  return res.status(404).send('Post not found');
+}
+entries[entryIndex].comments.push(newCommentObject);
+
+console.log(entries[entryIndex].comments);
+res.send(entries);
+
+// Trying to put image in comment box
+var tempPath = req.file.path
+var targetPath = path.join(__dirname, `./posts/commentImages/commentImage-${newCommentId}.png`);
+if (path.extname(req.file.originalname).toLowerCase() === ".png") {
+  fs.rename(tempPath, targetPath, err => {
+    if (err) return handleError(err, res);
+  });
+} else {
+  fs.unlink(tempPath, err => {
+    if (err) return handleError(err, res);
+
+    res
+      .status(403)
+      .contentType("text/plain")
+      .end("Only .png files are allowed!");
+  });
+}
+
+});
+
 
 app.use('/posts/',express.static('posts'));
 

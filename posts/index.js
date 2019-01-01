@@ -5,7 +5,7 @@ $(document).ready(function(){
       success: function(entries){
         for (var i = 0; i < entries.length; i++) {
           console.log(entries[i].id);
-          var id = entries[i].id;
+          const id = entries[i].id;
           var username = entries[i].username;
           var usernameDiv = document.createElement("div");
           var usernameNode = document.createTextNode(`${username} :`);
@@ -54,11 +54,26 @@ $(document).ready(function(){
           var descriptionNode = document.createTextNode(`${description}`);
           descriptionDiv.appendChild(descriptionNode);
 
-          var comments = document.createElement("div");
-          comments.innerHTML= '<form action="/comment/" method="post" enctype="multipart/form-data">'+
-          '<input type="textarea" name="comment">'+
-          '<input type="submit" value="Post comment">'+
-          '</form>'
+          var commentDiv = document.createElement("div");
+          var commentForm = document.createElement("form");
+          commentForm.setAttribute("id",`commentForm${id}`);
+          console.log(commentForm.id);
+          commentForm.method = 'POST';
+          commentForm.enctype = "multipart/form-data";
+          commentForm.action = `/comments/${id}`;
+          commentForm.innerHTML=
+          '<input type="textarea" name="newComment" placeholder="Type in comment here">'+
+          '<input type="file" name="file">'+
+          '<input type="submit" value="Post comment">'
+          commentDiv.appendChild(commentForm);
+
+          const comments = entries[i].comments;
+          var allComments = document.createTextNode(`${comments}`);
+          var commentsDiv = document.createElement("div");
+          commentsDiv.setAttribute("id", `allComments${id}`);
+          commentsDiv.appendChild(allComments);
+          commentsDiv.style.display="block";
+
 
           var info = document.createElement("div");
           info.classList.add("info");
@@ -75,7 +90,8 @@ $(document).ready(function(){
           info.appendChild(upvotesDiv);
           info.appendChild(downvotesDiv);
           info.appendChild(descriptionDiv);
-          info.appendChild(comments);
+          info.appendChild(commentDiv);
+          info.appendChild(commentsDiv);
 
           casing.appendChild(media);
           casing.appendChild(info);
@@ -84,6 +100,57 @@ $(document).ready(function(){
           document.getElementById(`upvote${id}`).addEventListener("click",upvote);
           document.getElementById(`downvote${id}`).addEventListener("click",downvote);
 
+          $(document).ready(function() {
+
+               $(`#commentForm${id}`).submit(function() {
+
+                  $(this).ajaxSubmit({
+
+                      error: function(xhr) {
+                  status('Error: ' + xhr.status);
+                      },
+
+                      success: function(entries) {
+                        alert( "response sent" );
+                        for (var i = 0; i < entries.length; i++) {
+                          var comments = entries[i].comments;
+                          const id = entries[i].id;
+                          var allComments = document.createTextNode(`${comments}`);
+                          $(`#allComments${id}`).empty();
+                          document.getElementById(`allComments${id}`).appendChild(allComments);
+                          console.log(entries);
+                      }
+              }});
+                  //Very important line, it disable the page refresh.
+              return false;
+              });
+          });
+          //Submit comment
+          //$(`#commentForm${id}`).submit(function(e){
+          //  alert( "what now?" );
+          //  e.preventDefault();
+          //  console.log(`/comments/${id}`);
+          //  $.ajax({
+          //    url:`/comments/${id}`,
+          //    enctype:'multipart/form-data',
+          //    type:'post',
+          //    data:$(`#commentForm${id}`).serialize(),
+//              success:function(entries){
+//                alert( "response sent" );
+//                for (var i = 0; i < entries.length; i++) {
+//                  var comments = entries[i].comments;
+//                  const id = entries[i].id;
+//                  var allComments = document.createTextNode(`${comments}`);
+//                  $(`#allComments${id}`).empty();
+//                  document.getElementById(`allComments${id}`).appendChild(allComments);
+//                  console.log(entries);
+//
+//        }}
+//    });
+//});
+
+
+
         }
 
       console.log(entries);
@@ -91,7 +158,7 @@ $(document).ready(function(){
 
 
     });
-}, 10);
+});
 
 function upvote() {
 var x = $(this).parent().siblings(".putClass")[0].innerHTML;
