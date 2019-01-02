@@ -60,7 +60,7 @@ $(document).ready(function(){
           console.log(commentForm.id);
           commentForm.method = 'POST';
           commentForm.enctype = "multipart/form-data";
-          commentForm.action = `/comments/${id}`;
+          commentForm.action = `/comments/${id}?name=${0}`;
           commentForm.innerHTML=
           '<input type="textarea" name="newComment" placeholder="Type in comment here">'+
           '<input type="file" name="file">'+

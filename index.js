@@ -16,9 +16,10 @@ const handleError = (err, res) => {
     .end("Oops! Something went wrong!");
 };
 
-var entries = [];
+var sourceData = fs.readFileSync('data.json');
+var entries = JSON.parse(sourceData);
 
-var id = 0;
+var id = entries.length;
 
 var newCommentId = 0;
 
@@ -33,6 +34,18 @@ id++;
 
 var newEntry ={id:id,username:username,content:content,upvote:0,downvote:0,parentEntry:"",comments:[]}
 entries.push(newEntry);
+
+var jsonContent = JSON.stringify(entries);
+console.log(jsonContent);
+
+fs.writeFile("data.json", jsonContent, 'utf8', function (err) {
+    if (err) {
+        console.log("An error occured while writing JSON Object to File.");
+        return console.log(err);
+    }
+
+    console.log("JSON file has been saved.");
+});
 
 var tempPath = req.file.path;
 var targetPath = path.join(__dirname, `./posts/images/${username}-${id}.png`);
@@ -56,12 +69,9 @@ if (path.extname(req.file.originalname).toLowerCase() === ".png") {
 // Troublesome code
 app.post('/comments/:id',upload.single('file'),(req, res, next) =>{
 var newComment = req.body.newComment;
-    newCommentId++;
     if (!req.file){
       console.log('Please upload a file');
     }
-
-var newCommentObject = {comment:newComment,tag:newCommentId}
 
 var idToFind = Number(req.params.id);
 var entryIndex = entries.findIndex(entry => entry.id === idToFind);
@@ -69,7 +79,29 @@ var entryIndex = entries.findIndex(entry => entry.id === idToFind);
 if (entryIndex === -1) {
   return res.status(404).send('Post not found');
 }
+
+//if (idToFind && specificCommentId) {
+//  specificCommentId++
+//} else {
+//  specificCommentId= 1;
+//}
+
+var specificCommentId = entries[entryIndex].comments.length + 1;
+var newCommentId = `${idToFind}-${specificCommentId}`
+var newCommentObject = {comment:newComment,tag:newCommentId}
 entries[entryIndex].comments.push(newCommentObject);
+
+var jsonContent = JSON.stringify(entries);
+console.log(jsonContent);
+
+fs.writeFile("data.json", jsonContent, 'utf8', function (err) {
+    if (err) {
+        console.log("An error occured while writing JSON Object to File.");
+        return console.log(err);
+    }
+
+    console.log("JSON file has been saved.");
+});
 
 console.log(entries[entryIndex].comments);
 res.send(entries);
