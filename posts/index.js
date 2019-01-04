@@ -74,6 +74,12 @@ $(document).ready(function(){
           commentsDiv.appendChild(allComments);
           commentsDiv.style.display="block";
 
+          var deletePostDiv = document.createElement("div");
+          var deletePostBtn = document.createElement("BUTTON");
+          deletePostBtn.setAttribute("id", `deletePost${id}`);
+          var delBtnTxt = document.createTextNode("Delete Post");
+          deletePostBtn.appendChild(delBtnTxt);
+          deletePostDiv.appendChild(deletePostBtn);
 
           var info = document.createElement("div");
           info.classList.add("info");
@@ -85,6 +91,10 @@ $(document).ready(function(){
           var casing = document.createElement("div");
           casing.classList.add("casing");
 
+
+
+
+
           info.appendChild(putIdentifier);
           info.appendChild(usernameDiv);
           info.appendChild(upvotesDiv);
@@ -92,13 +102,17 @@ $(document).ready(function(){
           info.appendChild(descriptionDiv);
           info.appendChild(commentDiv);
           info.appendChild(commentsDiv);
+          info.appendChild(deletePostDiv);
 
           casing.appendChild(media);
           casing.appendChild(info);
 
+          casing.setAttribute("id", `casing${id}`);
+
           document.getElementById("sample").appendChild(casing);
           document.getElementById(`upvote${id}`).addEventListener("click",upvote);
           document.getElementById(`downvote${id}`).addEventListener("click",downvote);
+          document.getElementById(`deletePost${id}`).addEventListener("click",deletePost);
 
           $(document).ready(function() {
 
@@ -159,6 +173,24 @@ $(document).ready(function(){
 
     });
 });
+
+function deletePost() {
+var x = $(this).parent().siblings(".putClass")[0].innerHTML;
+$(`#casing${x}`).remove();
+console.log(x);
+$.ajax({
+  url: `/deletePost/${x}`,
+  method: 'DELETE',
+  success: function(entry){
+console.log(entry);
+  var id = entry.id;
+
+  }
+
+});
+
+}
+
 
 function upvote() {
 var x = $(this).parent().siblings(".putClass")[0].innerHTML;

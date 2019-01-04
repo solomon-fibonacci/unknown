@@ -9,6 +9,9 @@ const path = require ('path');
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended:true}));
 
+const MongoClient = require('mongodb').MongoClient;
+const uri = "mongodb+srv://yaakov:Yaakov(12345)@cluster0-ltnsl.mongodb.net/mydb";
+
 const handleError = (err, res) => {
   res
     .status(500)
@@ -29,11 +32,22 @@ app.use('/',express.static('public'));
 app.post('/entry/',upload.single('file'), (req, res, next) =>{
 var username = req.body.username;
 var content = req.body.content;
-id++;
+id = entries.length+1;
 
 
 var newEntry ={id:id,username:username,content:content,upvote:0,downvote:0,parentEntry:"",comments:[]}
 entries.push(newEntry);
+
+MongoClient.connect(uri,{ useNewUrlParser: true }, function(err, db) {
+  if (err) throw err;
+  var dbo = db.db("mydb");
+
+  dbo.collection("entries").insertOne(newEntry, function(err, res) {
+    if (err) throw err;
+    console.log("1 document inserted");
+    db.close();
+  });
+});
 
 var jsonContent = JSON.stringify(entries);
 console.log(jsonContent);
@@ -156,6 +170,16 @@ if (entryIndex === -1) {
   return res.status(404).send('Post not found');
 }
 entries[entryIndex].downvote++;
+res.send(entries[entryIndex]);
+});
+
+app.delete('/deletePost/:id', (req, res, next) =>{
+var idToFind = Number(req.params.id);
+var entryIndex = entries.findIndex(entry => entry.id === idToFind);
+if (entryIndex === -1) {
+  return res.status(404).send('Post not found');
+}
+entries.splice(entryIndex,1);
 res.send(entries[entryIndex]);
 });
 
