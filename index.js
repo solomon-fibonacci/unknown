@@ -19,12 +19,21 @@ const handleError = (err, res) => {
     .end("Oops! Something went wrong!");
 };
 
-var sourceData = fs.readFileSync('data.json');
-var entries = JSON.parse(sourceData);
+var id;
 
-var id = entries.length;
-
-var newCommentId = 0;
+MongoClient.connect(uri, { useNewUrlParser: true }, function(err, db) {
+  if (err) throw err;
+  var dbo = db.db("mydb");
+  var id;
+  dbo.collection("entries").find({}).toArray(function(err, result) {
+    if (err) throw err;
+    console.log(result);
+    db.close();
+    var entries = result;
+    var id = result.length;
+    console.log(id);
+  });
+  });
 
 app.use('/',express.static('public'));
 
@@ -32,52 +41,45 @@ app.use('/',express.static('public'));
 app.post('/entry/',upload.single('file'), (req, res, next) =>{
 var username = req.body.username;
 var content = req.body.content;
-id = entries.length+1;
 
+var newEntry ={username:username,content:content,upvote:0,downvote:0,parentEntry:"",comments:[]}
 
-var newEntry ={id:id,username:username,content:content,upvote:0,downvote:0,parentEntry:"",comments:[]}
-entries.push(newEntry);
 
 MongoClient.connect(uri,{ useNewUrlParser: true }, function(err, db) {
   if (err) throw err;
   var dbo = db.db("mydb");
 
-  dbo.collection("entries").insertOne(newEntry, function(err, res) {
+  dbo.collection("entries").insertOne(newEntry, function(err, result) {
     if (err) throw err;
     console.log("1 document inserted");
+    dbo.collection("entries").find({}).toArray(function(err, result) {
+      if (err) throw err;
+      var id = result.length;
+      console.log(id);
+
+      var tempPath = req.file.path;
+      var targetPath = path.join(__dirname, `./posts/images/${username}-${id}.png`);
+      if (path.extname(req.file.originalname).toLowerCase() === ".png") {
+        fs.rename(tempPath, targetPath, err => {
+          if (err) return handleError(err, res);
+        });
+          res.redirect('/posts/');
+      } else {
+        fs.unlink(tempPath, err => {
+          if (err) return handleError(err, res);
+
+          res
+            .status(403)
+            .contentType("text/plain")
+            .end("Only .png files are allowed!");
+        });
+      }
+    });
     db.close();
+
   });
 });
 
-var jsonContent = JSON.stringify(entries);
-console.log(jsonContent);
-
-fs.writeFile("data.json", jsonContent, 'utf8', function (err) {
-    if (err) {
-        console.log("An error occured while writing JSON Object to File.");
-        return console.log(err);
-    }
-
-    console.log("JSON file has been saved.");
-});
-
-var tempPath = req.file.path;
-var targetPath = path.join(__dirname, `./posts/images/${username}-${id}.png`);
-if (path.extname(req.file.originalname).toLowerCase() === ".png") {
-  fs.rename(tempPath, targetPath, err => {
-    if (err) return handleError(err, res);
-  });
-    res.redirect('/posts/');
-} else {
-  fs.unlink(tempPath, err => {
-    if (err) return handleError(err, res);
-
-    res
-      .status(403)
-      .contentType("text/plain")
-      .end("Only .png files are allowed!");
-  });
-}
 });
 
 // Troublesome code
@@ -145,7 +147,17 @@ app.use('/posts/',express.static('posts'));
 
 
 app.get('/entry/', (req, res, next) =>{
-res.send(entries);
+  MongoClient.connect(uri, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("mydb");
+    dbo.collection("entries").find({}).toArray(function(err, result) {
+      if (err) throw err;
+      console.log(result);
+      db.close();
+      res.send(result);
+    });
+  });
+
 });
 
 app.get('/entry/:id', (req, res, next) =>{
